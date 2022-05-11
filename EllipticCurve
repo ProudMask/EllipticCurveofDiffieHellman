@@ -1,0 +1,204 @@
+import math
+INF_POINT <- None #abstract point at infinity
+FUNCTION tobinary(n):
+ENDFUNCTION
+ while(n>=0):
+ENDWHILE
+ i <- 0
+ if n==0:
+ ENDIF
+ return n
+ binary_digits <- []
+ r <- int(math.log(n,2))
+ for l in range(0,r+1):
+ ENDFOR
+ if n % 2 = 1:
+ ENDIF
+ binary_digits.append(1)
+ n=int(n/2)
+ ELSE:
+ binary_digits.append(0)
+ n=int(n/2)
+ return binary_digits
+
+FUNCTION isprime(n):
+ENDFUNCTION
+ factors <- []
+ if (n>1):
+ENDIF
+ floor_sqrt <- int(n ** (0.5))
+ for d in range(2,floor_sqrt + 1):
+ ENDFOR
+ if n % d != 0:
+ ENDIF
+ continue
+factors.append(d)
+ n <- n/d
+ if len(factors) = 0:
+ ENDIF
+ return True
+ return False
+CLASS EllipticCurve:
+ENDCLASS
+ def __init__ (self,a,b,p):
+ENDFUNCTION
+ a <- a
+ b <- b
+ p <- p
+ points <- []
+ def definePoints(self):
+ENDFUNCTION
+ points.append(INF_POINT)
+ for x in range( p):
+ ENDFOR
+ for y in range( p):
+ ENDFOR
+ if equalModp(y*y, x** 3 + a*x + b):
+ ENDIF
+ points.append((x,y))
+ def printPoints(self):
+ENDFUNCTION
+ print( points)
+ def numberPoints(self):
+ENDFUNCTION
+return len( points)
+ def discriminant(self):
+ENDFUNCTION
+ D <- -16*(4*( a ** 3) + 27 * b * b)
+ return reduceModp(D)
+ #helper functions
+def reduceModp(self, x):
+ENDFUNCTION
+ return x % p
+ def equalModp(self, x, y):
+ENDFUNCTION
+ return reduceModp(x-y) = 0
+ def inverseModp(self,x):
+ENDFUNCTION
+ IF x = 0:
+ ENDIF
+ raise ZeroDivisionError('division by zero')
+ IF x < 0:
+ ENDIF
+ # k ** -1 <- p - (-k) ** -1 (mod p)
+ RETURN p - inverseModp(-x)
+ # Extended Euclidean algorithm.
+ s, old_s <- 0, 1
+ t, old_t <- 1, 0
+ r, old_r <- p, x
+ while r != 0:
+ ENDWHILE
+ quotient <- old_r // r
+ old_r, r <- r, old_r - quotient * r
+ old_s, s <- s, old_s - quotient * s
+ old_t, t <- t, old_t - quotient * t
+ gcd, k, y <- old_r, old_s, old_t
+ assert gcd = 1
+ assert (x * k) % p = 1
+ RETURN k % p
+ def add(self, P1,P2):
+ENDFUNCTION
+"""
+ Take in two points, draw a line from one to the other. At the third
+point of intersection with the elliptic curve on the line, reflect across
+the x axis.
+ This defines a binary operation of addition on the elliptic curve,
+which is abelian, always invertible, and associative. In other words it 
+defines a group law.
+ INPUTS: P1=(x1,y1), P2 = (x2,y2)
+ OUTPUTS: P1 + P2 = (x3,y3)
+ """
+ if P1 = INF_POINT: # i.e. P1 is the additive identity
+ ENDIF
+ return P2
+ if P2 = INF_POINT: # i.e. P2 is the additive identity
+ ENDIF
+ return P1
+ x1 <- P1[0]
+ y1 <- P1[1]
+ x2 <- P2[0]
+ y2 <- P2[1]
+ if equalModp(x1,x2) AND equalModp(y1,-y2): #in this case the points
+are negatives of each other in the EC group law
+ ENDIF
+ return None #since vertical lines dont
+intersect the curve, their sum goes to infinity
+ if equalModp(x1,x2) AND equalModp(y1,y2):
+ ENDIF
+ u <- reduceModp(3 * x1 * x1 + a) * inverseModp(2*y1) #
+geometrically this is the slope of the tangent line to the curve at the
+point ( implicitly differentiate y^2 <- x^3 +ax +b)
+ENDIF
+ ELSE:
+ u <- reduceModp(y1 - y2) * inverseModp(x1 - x2) #geometrically
+its the slope of the line throught the points
+ v <- reduceModp(y1-u*x1) #geometrically this is the y-intercept
+of the line (either the tangent OR through the points depending on the
+above if-else)
+
+ENDIF
+ x3 <- reduceModp(u*u - x1 - x2) #the x-coordinate of P1 + P2
+ y3 <- reduceModp(-u*x3-v) #the y-coordinate of P1 + P2
+ return(x3,y3)
+ def testAssociativity(self):
+ENDFUNCTION
+ n <- len( points)
+for i in range (n):
+ ENDFOR
+ for j in range(n):
+ ENDFOR
+ for k in range(n):
+ ENDFOR
+ P <- add( points[i], add( points[j], points[k]))
+ Q <- add( add( points[i], points[j]), points[k])
+ if P != Q:
+ ENDIF
+ return False
+ return True
+ def multiply(self, n, P):
+ENDFUNCTION
+ """
+ Implements "double and add method". For n = m_0 + m_1 *2 + m_2 * 2^2
++ ... + m_r 2^r
+ compute nP = m_0P + m_1 * 2P + m_2 * 2^2 P + ... + m_r * 2^r P
+ this is a faster O(log n) method than the naive multiplication, which
+is exponential
+ """
+Q <- INF_POINT
+ binary_n <- tobinary(n)
+ for x in binary_n:
+ ENDFOR
+ if x = 1:
+ ENDIF
+ Q <- add(P,Q)
+ P <- add(P,P)
+ return Q
+IF __name__ = "__main__":
+ENDIF
+ p <- 1
+ while not isprime(p) OR p < 4:
+ENDWHILE
+ p <- int(input("Enter a prime number (> 3) to calculate the number of
+elliptic curves modulo that prime."))
+ count <- 0
+ for a in range(p):
+ENDFOR
+for b in range(p):
+ ENDFOR
+ ec <- EllipticCurve(a,b,p)
+ ec.definePoints()
+ ENDFUNCTION
+ if ec.discriminant() = 0:
+ ENDIF
+ continue
+ count += 1
+ print("y^2 <- " + "x^3 + " + str(a)+"x + " + str(b))
+ print( "a= " + str(a) + "\tb= " +str(b))
+ print("discriminant= " + str(ec.discriminant()))
+ print("number of points <- " + str(ec.numberPoints()))
+ print("associative=" + str(ec.testAssociativity()))
+ ec.printPoints()
+ print("<-"*21)
+ print("The number of elliptic curves over F_ " + str(p) + " is " +
+str(count))
+
