@@ -1,41 +1,45 @@
-# EllipticCurveofDiffieHellman
-psuedocode of elliptic curve of diffie helman for code written  in python
+# Elliptic Curve Diffie–Hellman Learning Demo
 
-## ECDH (Elliptic curve of Diffie Hellman) – Key Exchange Algorithm
-The system was established in 1976 by Whitfield Diffie and Martin Hellman , it is a scheme that
-consist of key agreement, key agreement refers to which indicates that when two or more parties uses
-a protocol that will safely exchange a consequent key value. It suggested that the Diffie-Hellman
-key exchange is established on the idea of that it is quite difficult to compute a discrete logarithm
-above a finite field. It utilized the modular exponentiation so it could yield exchange data encryption
-key so all the sides communication will exchange it. By multiplying points, Neal Koblits and VS
-Miller used this method of Elliptic curve over a finite field to yield the data that both parties would
-share.
-The user to keys used to access the cloud data is generated the following way, nominating a point 𝑃
-on the curve and a number assume it will be 𝑑 𝑤ℎ𝑒𝑟𝑒 (1 ≤ 𝑑 ≥ 𝑛 − 1), then we will be calculating
-𝑄 which is the Public key by the equation, 𝑑 which the private key.
-𝑄 = 𝑑 ∗ 𝑃
-The receiver decrypts the encrypted message sent by the sender using the saved public key. He uses
-his own private key.
+A runnable, in-memory key-agreement and authenticated-encryption example using the cryptography library. Alice and Bob independently compute a shared secret with ECDH, derive a 32-byte key using HKDF-SHA256, then round-trip a synthetic message using AES-256-GCM.
 
-## Algorithm of the code
-The algorithm of the code we are implementing is Diffie Helman key exchange, and we will state the
-algorithm in this section.
-The steps of the algorithm as:
-1. Alice will start by producing a random pair of Keys by the formula
-a. {PrivateKeyOfAlice, PublicKeyOfAlice = PrivateKeyOfAlice *G}
-2. Bob will start by producing a random pair of keys by the formula
-a. {PrivateKeyOfBob, PublicKeyOfBob = PrivateKeyOfBob *G}
-3. Then both Alice along Bob will exchange each other’s public key through an insecure channel.
-4. Then Alice and Bob will calculate the shared key between them by the formulas
-a. Alice, Shared Key = PublicKeyOfBob * PrivateKeyOfAlice
-b. Bob, Shared Key = PublicKeyOfAlice * PrivateKeyOfBob
-5. For now, both Alice and Bob will possess the shared key were this formula proves it
-a. Shared Key == PublicKeyOfBob * PrivateKeyOfAlice == PublicKeyOfAlice *
-PrivateKeyOfBob
+## Run
 
-## Pseudocode of ECDH 
+Python 3.10 or later:
 
-A point in the group and the order of the group (in this case the number of points on the elliptic curve)
-are public knowledge.
-Bob chooses a secret message (a number b with 0 < b < n).
-Alice chooses a secret message (a number a with 0 < a < n).
+```bash
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+python ecdh_demo.py
+python -m unittest discover -s tests -v
+```
+
+The JSON report should show derived_keys_match and round_trip_verified as true. It prints algorithm names and byte counts, not private keys, shared secrets, derived keys, or message contents. Key pairs, salt, and nonce are freshly generated each run; results are verified by properties rather than fixed ciphertext. No files or network connections are created by the demo.
+
+An optional `--message` accepts synthetic text. Avoid putting real secrets in command-line arguments because they may appear in process listings or shell history.
+
+## Workflow
+
+1. Generate fresh P-256 private keys for Alice and Bob.
+2. Each uses their own private key and the other's public key in a separate ECDH exchange.
+3. Feed the resulting shared bytes through HKDF-SHA256 with the same 32-byte random salt and fixed demo context.
+4. Encrypt UTF-8 text with Alice's derived key, a fresh 12-byte nonce, and AES-GCM using the demo context as authenticated additional data.
+5. Bob derives his key independently and verifies/decrypts the ciphertext. Authentication failure raises InvalidTag; no unverified plaintext is returned.
+
+ECDH is key agreement, not message encryption. The public key is not sufficient to decrypt a message. The old handwritten scalar-arithmetic code is not used by this implementation.
+
+## Preserved reference material
+
+`EllipticCurve` and `EllipticCurveOfDiffieHellman` are the original extensionless pseudocode files, retained unchanged as historical learning material. They are not executable Python modules. The original sketches use secp256k1 and AES-EAX; the new runnable example deliberately uses library-backed P-256, HKDF, and AES-GCM. It does not claim wire-format or API compatibility with those sketches.
+
+## Scope and limitations
+
+Both participants exist in one process. This is not a complete secure messaging protocol: public keys are not authenticated, so an untrusted exchange would be vulnerable to active substitution. There is no identity binding, certificate/signature validation, replay protection, key persistence, or network transport. Random nonces are adequate for this small demonstration; no high-volume nonce-lifecycle design is included. The cryptographic primitives are library-backed, but the demonstration itself has not undergone a security audit.
+
+Tests check independent key derivation, Unicode/empty-message round trips, rejection of changed ciphertext, wrong keys/salt, curve and input validation, and CLI/import behavior. No real keys or user secrets are committed. This demonstrates cryptographic API use, not statistical modeling or ML.
+
+## References
+
+- [cryptography elliptic-curve API and ECDH](https://cryptography.io/en/stable/hazmat/primitives/asymmetric/ec/)
+- [HKDF](https://cryptography.io/en/stable/hazmat/primitives/key-derivation-functions/#hkdf)
+- [AES-GCM authenticated encryption](https://cryptography.io/en/stable/hazmat/primitives/aead/#cryptography.hazmat.primitives.ciphers.aead.AESGCM)
